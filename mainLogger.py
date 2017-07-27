@@ -33,6 +33,15 @@ class car:
         response = self.connection.query(cmd)
 	Logger.write(response)
         return response.value
+    def getSpeed():
+	return str(self.connection.query(obd.commands.SPEED).value)
+    def getFuelLevel():
+	return str(self.connection.query(obd.commands.FUEL_LEVEL).value)
+    def getThrottlePosition():
+	return str(self.connection.query(obd.commands.THROTTLE_POS).value)
+    def getCoolantTemp():
+	return str(self.connection.query(obd.commands.COOLANT).value)
+
 
 Logger = Log()
 #tahoe = car()
@@ -56,5 +65,3 @@ while True:
 	Logger.write(' fuel level:')
 	Logger.write(str(connection.query(fuel_level).value))
 	Logger.write(' Throttle Position')
-	Logger.write(str(connection.query(throttle_pos).value))
-
