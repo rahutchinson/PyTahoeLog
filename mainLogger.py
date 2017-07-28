@@ -1,4 +1,4 @@
-import obd
+import obd,time
 import arrow
 import json, os
 from log import Log
@@ -31,29 +31,31 @@ class car:
         self.counter = 0
    
     def getSpeed(self,r):
-	self.log.add("SPEED", r.value)
+	self.log.add("SPEED", str(r.value))
         self.count()
 
     def getFuelLevel(self,r):
-        self.log.add("FUEL_LEVEL", r.value)
+	print(r.value)
+        self.log.add("FUEL_LEVEL", str(r.value))
         self.count()
 
     def getThrottlePosition(self,r):
-	self.log.add("THROTTLE_POSITION", r.value)
+	self.log.add("THROTTLE_POSITION", str(r.value))
         self.count()
 
     def getCoolantTemp(self,r):
-        self.log.add("COOLANT_TEMP", r.value)
+        self.log.add("COOLANT_TEMP", str(r.value))
         self.count()
 
     def getOilPressure(self,r):
-        self.log.add("OIL_PRESSURE", r.value)
+        self.log.add("OIL_PRESSURE", str(r.value))
         self.count()
 
     def count(self):
-        self.count += 1
+        self.counter += 1
         if self.counter == 5: #number of callbacks 
-            self.logger.write(self.log.getlog())
+            self.logger.write(self.log.getLog())
+	    self.counter = 0
 
  
     def setupCallbacks(self):
@@ -61,11 +63,16 @@ class car:
         self.connection.watch(obd.commands.FUEL_LEVEL, callback=self.getFuelLevel)
         self.connection.watch(obd.commands.THROTTLE_POS, callback=self.getThrottlePosition)
         self.connection.watch(obd.commands.COOLANT_TEMP, callback=self.getCoolantTemp)
-        self.connection.watch(obd.commands.OIL_TEMP, callback=self.getOilPressure) # change to oil pressure
+        self.connection.watch(obd.commands.FUEL_STATUS, callback=self.getOilPressure) # change to oil pressure
+
+    def startLogging(self):
+	self.connection.start()
+	time.sleep(60)
+	self.connection.stop()
 
 
 
 Logger = Logger()
 tahoe = car(Logger)
-
 tahoe.setupCallbacks()
+tahoe.startLogging()
