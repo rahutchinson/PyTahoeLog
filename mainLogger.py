@@ -1,23 +1,22 @@
 import obd
 import arrow
-import json
-import os
+import json, os
+from log import Log
 
 
-class Log:
+class Logger:
     def __init__(self):
         date = arrow.now('US/Central')
         folder =  "/home/ryan/OBDlogs/" + date.format('MM-DD-YYYY')
-        if not (os.path.isdir(folder)):
-            os.mkdir(folder)
+        if not os.path.isdir(folder):
+            os.mkdir(folder, 0755)
         filename = date.format('HH_mm_ss')
         self.toFile = open(folder+filename,'w+')
         begin = {"id":"BEGIN", "time":arrow.now('US/Central').format('HH:mm:ss')}
         self.toFile.write(json.dumps(begin))
-
     def write(self, data):
-	toWrite = {"id": update, "time":arrow.now('US/Central').format('HH:mm:ss'), "Fuel_Level": str(data.fuel_level), "Speed": str(data.speed), "coolant": str(data.coolant)}
-        self.toFile.write(json.dumps(toWrite))
+        print(data)
+        self.toFile.write(json.dumps(data))
 
     def close():
         lastline = {"id":"END", "time":arrow.now('US/Central').format('HH:mm:ss')}
@@ -25,43 +24,48 @@ class Log:
         self.toFile.close()
 
 class car:
-    def __init__(self):
-        self.connection = obd.OBD()
-	Logger.write(self.connection)
-    def test():
-        cmd = obd.commands["RPM"]
-        response = self.connection.query(cmd)
-	Logger.write(response)
-        return response.value
-    def getSpeed():
-	return str(self.connection.query(obd.commands.SPEED).value)
-    def getFuelLevel():
-	return str(self.connection.query(obd.commands.FUEL_LEVEL).value)
-    def getThrottlePosition():
-	return str(self.connection.query(obd.commands.THROTTLE_POS).value)
-    def getCoolantTemp():
-	return str(self.connection.query(obd.commands.COOLANT).value)
+    def __init__(self, logger):
+        self.connection = obd.Async()
+        self.log = Log()
+        self.logger = logger
+        self.counter = 0
+   
+    def getSpeed(self,r):
+	self.log.add("SPEED", r.value)
+        self.count()
+
+    def getFuelLevel(self,r):
+        self.log.add("FUEL_LEVEL", r.value)
+        self.count()
+
+    def getThrottlePosition(self,r):
+	self.log.add("THROTTLE_POSITION", r.value)
+        self.count()
+
+    def getCoolantTemp(self,r):
+        self.log.add("COOLANT_TEMP", r.value)
+        self.count()
+
+    def getOilPressure(self,r):
+        self.log.add("OIL_PRESSURE", r.value)
+        self.count()
+
+    def count(self):
+        self.count += 1
+        if self.counter == 5: #number of callbacks 
+            self.logger.write(self.log.getlog())
+
+ 
+    def setupCallbacks(self):
+        self.connection.watch(obd.commands.SPEED, callback=self.getSpeed)
+        self.connection.watch(obd.commands.FUEL_LEVEL, callback=self.getFuelLevel)
+        self.connection.watch(obd.commands.THROTTLE_POS, callback=self.getThrottlePosition)
+        self.connection.watch(obd.commands.COOLANT_TEMP, callback=self.getCoolantTemp)
+        self.connection.watch(obd.commands.OIL_TEMP, callback=self.getOilPressure) # change to oil pressure
 
 
-Logger = Log()
-#tahoe = car()
-#car.test
-#Logger.write(tahoe.test)
 
-connection = obd.OBD()
+Logger = Logger()
+tahoe = car(Logger)
 
-coolant = obd.commands.COOLANT_TEMP
-speed = obd.commands.SPEED
-fuel_level = obd.commands.FUEL_LEVEL
-throttle_pos = obd.commands.THROTTLE_POS
-data = {}
-
-while True:
-	Logger.write(' Coolant:') 
-	connection.query(coolant).value))
-	data.
-	Logger.write(' speed:')
-	Logger.write(str(connection.query(speed).value))
-	Logger.write(' fuel level:')
-	Logger.write(str(connection.query(fuel_level).value))
-	Logger.write(' Throttle Position')
+tahoe.setupCallbacks()
