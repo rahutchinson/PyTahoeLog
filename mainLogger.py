@@ -1,27 +1,7 @@
 import obd,time
-import arrow
 import json, os
 from log import Log
-
-
-class Logger:
-    def __init__(self):
-        date = arrow.now('US/Central')
-        folder =  "/home/ryan/OBDlogs/" + date.format('MM-DD-YYYY')
-        if not os.path.isdir(folder):
-            os.mkdir(folder, 0755)
-        filename = date.format('HH_mm_ss')
-        self.toFile = open(folder+filename,'w+')
-        begin = {"id":"BEGIN", "time":arrow.now('US/Central').format('HH:mm:ss')}
-        self.toFile.write(json.dumps(begin))
-    def write(self, data):
-        print(data)
-        self.toFile.write(json.dumps(data))
-
-    def close():
-        lastline = {"id":"END", "time":arrow.now('US/Central').format('HH:mm:ss')}
-        self.toFile.write(json.dumps(lastline))
-        self.toFile.close()
+from Logger import Logger
 
 class car:
     def __init__(self, logger):
@@ -48,12 +28,21 @@ class car:
         self.count()
 
     def getOilPressure(self,r):
-        self.log.add("OIL_PRESSURE", str(r.value))
+        self.log.add("RPM", str(r.value))
         self.count()
+
+    def getLoad(self,r):
+	self.log.add("ENGINE_LOAD",str(r.value))
+	self.count()
+
+    def getFuelRate(self,r):
+	self.log.add("FUEL_RATE", str(r.value))
+	self.count()
+
 
     def count(self):
         self.counter += 1
-        if self.counter == 5: #number of callbacks 
+        if self.counter == 7 : #number of callbacks 
             self.logger.write(self.log.getLog())
 	    self.counter = 0
 
@@ -63,12 +52,15 @@ class car:
         self.connection.watch(obd.commands.FUEL_LEVEL, callback=self.getFuelLevel)
         self.connection.watch(obd.commands.THROTTLE_POS, callback=self.getThrottlePosition)
         self.connection.watch(obd.commands.COOLANT_TEMP, callback=self.getCoolantTemp)
-        self.connection.watch(obd.commands.FUEL_STATUS, callback=self.getOilPressure) # change to oil pressure
+        self.connection.watch(obd.commands.RPM, callback=self.getOilPressure) # change to oil pressure
+	self.connection.watch(obd.commands.ENGINE_LOAD, callback=self.getLoad)
+	self.connection.watch(obd.commands.FUEL_RATE, callback=self.getFuelRate)
 
     def startLogging(self):
 	self.connection.start()
-	time.sleep(60)
-	self.connection.stop()
+
+    def stopLogging(self):
+	self.connection.start()
 
 
 
@@ -76,3 +68,5 @@ Logger = Logger()
 tahoe = car(Logger)
 tahoe.setupCallbacks()
 tahoe.startLogging()
+time.sleep(60)
+tahoe.stopLogging() 
