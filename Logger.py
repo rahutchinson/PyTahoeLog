@@ -3,7 +3,7 @@ import arrow, os, json
 class Logger:
     def __init__(self):
         date = arrow.now('US/Central')
-        folder =  "/home/ryan/OBDlogs/" + date.format('MM-DD-YYYY')
+        folder =  "/OBDlogs/" + date.format('MM-DD-YYYY')
         if not os.path.isdir(folder):
             os.mkdir(folder, 0755)
         filename = date.format('HH_mm_ss')
