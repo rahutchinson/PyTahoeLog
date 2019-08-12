@@ -60,13 +60,16 @@ class car:
 	self.connection.start()
 
     def stopLogging(self):
-	self.connection.start()
+	self.connection.stop()
+
+    def getStatus(self):
+        return self.connection.status()
 
 
 
 Logger = Logger()
 tahoe = car(Logger)
 tahoe.setupCallbacks()
-tahoe.startLogging()
-time.sleep(60)
+while tahoe.getStatus() == OBDStatus.CAR_CONNECTED:
+    tahoe.startLogging()
 tahoe.stopLogging() 
